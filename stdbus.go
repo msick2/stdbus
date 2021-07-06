@@ -33,7 +33,7 @@ func GetSTDBUS(port string, baud int) (*STDBUS, error) {
 	return &STDBUS{pstSerialPort: stSerialPort, pstCRCTable: stCRCTable}, err
 }
 
-func (ego *STDBUS) packetsend(a_an8Packet []byte) ([]byte, error) {
+func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
 
 	ego.pn8SendPacket = make([]byte, len(a_an8Packet))
 	ego.pn8RcvPacket = make([]byte, len(a_an8Packet))
