@@ -17,8 +17,6 @@ const DIST uint8 = 0x7d
 type STDBUS struct {
 	pstSerialPort *serial.Port
 	pstCRCTable   *crc16.Table
-	//pn8SendPacket []byte
-	//pn8RcvPacket  []byte
 }
 
 func GetSTDBUS(port string, baud int, timeout time.Duration) (*STDBUS, error) {
