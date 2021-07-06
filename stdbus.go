@@ -17,15 +17,15 @@ const DIST uint8 = 0x7d
 type STDBUS struct {
 	pstSerialPort *serial.Port
 	pstCRCTable   *crc16.Table
-	pn8SendPacket []byte
-	pn8RcvPacket  []byte
+	//pn8SendPacket []byte
+	//pn8RcvPacket  []byte
 }
 
-func GetSTDBUS(port string, baud int) (*STDBUS, error) {
+func GetSTDBUS(port string, baud int, timeout time.Duration) (*STDBUS, error) {
 
 	stCRCTable := crc16.MakeTable(crc16.CRC16_MODBUS)
 
-	stSerialPort, err := serial.OpenPort(&serial.Config{Name: port, Baud: baud, ReadTimeout: time.Millisecond * 10})
+	stSerialPort, err := serial.OpenPort(&serial.Config{Name: port, Baud: baud, ReadTimeout: timeout})
 	if err != nil {
 		return nil, err
 	}
