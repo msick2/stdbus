@@ -17,15 +17,15 @@ const DIST uint8 = 0x7d
 type STDBUS struct {
 	pstSerialPort *serial.Port
 	pstCRCTable   *crc16.Table
-	pn8SendPacket []byte
-	pn8RcvPacket  []byte
+	//pn8SendPacket []byte
+	//pn8RcvPacket  []byte
 }
 
-func GetSTDBUS(port string, baud int) (*STDBUS, error) {
+func GetSTDBUS(port string, baud int, timeout time.Duration) (*STDBUS, error) {
 
 	stCRCTable := crc16.MakeTable(crc16.CRC16_MODBUS)
 
-	stSerialPort, err := serial.OpenPort(&serial.Config{Name: port, Baud: baud, ReadTimeout: time.Millisecond * 10})
+	stSerialPort, err := serial.OpenPort(&serial.Config{Name: port, Baud: baud, ReadTimeout: timeout})
 	if err != nil {
 		return nil, err
 	}
@@ -35,31 +35,18 @@ func GetSTDBUS(port string, baud int) (*STDBUS, error) {
 
 func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
 
-	ego.pn8SendPacket = make([]byte, len(a_an8Packet))
-	ego.pn8RcvPacket = make([]byte, len(a_an8Packet))
-	copy(ego.pn8SendPacket, a_an8Packet)
-
-	//fmt.Println("ORN DATA")
-	//fmt.Println(ego.pn8SendPacket)
-	retCRC, err := ego.makeCRC(ego.pn8SendPacket)
+	retCRC, err := ego.makeCRC(a_an8Packet)
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
-	//fmt.Println("retCRC")
-	//fmt.Println(retCRC)
 
 	retEncode, err := ego.packetEncode(retCRC)
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
-	//fmt.Println("retEncode")
-	//fmt.Println(retEncode)
 
 	sendRes, err := ego.pstSerialPort.Write(retEncode)
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
 
@@ -67,28 +54,18 @@ func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
 
 	rcvData, err := ego.packetReceive()
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
-	//fmt.Println("rcvData")
-	//fmt.Println(rcvData)
 
 	resCRC, err := ego.calcCRC(rcvData)
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
-	//fmt.Println("resCRC")
-	//fmt.Println(resCRC)
 
 	resDecode, err := ego.packetDecode(resCRC)
 	if err != nil {
-		//log.Fatal(err)
 		return nil, err
 	}
-
-	//fmt.Println("RCV DATA")
-	//fmt.Println(resDecode)
 	return resDecode, nil
 }
 
