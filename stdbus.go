@@ -55,16 +55,17 @@ func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	resCRC, err := ego.calcCRC(rcvData)
+	resDecode, err := ego.packetDecode(rcvData)
 	if err != nil {
 		return nil, err
 	}
 
-	resDecode, err := ego.packetDecode(resCRC)
+	resCRC, err := ego.calcCRC(resDecode)
 	if err != nil {
 		return nil, err
 	}
-	return resDecode, nil
+
+	return resCRC, nil
 }
 
 func (ego *STDBUS) makeCRC(a_an8Packet []byte) ([]byte, error) {
@@ -154,23 +155,6 @@ func (ego *STDBUS) packetReceive() ([]byte, error) {
 
 }
 
-func (ego *STDBUS) calcCRC(a_an8Packet []byte) ([]byte, error) {
-	checksum := crc16.Checksum(a_an8Packet, ego.pstCRCTable)
-
-	temp := a_an8Packet[0 : len(a_an8Packet)-2]
-
-	if checksum != 0 {
-
-		fmt.Println(a_an8Packet)
-		fmt.Printf("calcCRC: %x\n", checksum)
-		fmt.Printf("calcCRC: %x\n", a_an8Packet[len(a_an8Packet)-1])
-		fmt.Printf("calcCRC: %x\n", a_an8Packet[len(a_an8Packet)-2])
-
-		return temp, errors.New("calcCRC: Received data CRC wrong")
-	}
-	return temp, nil
-}
-
 func (ego *STDBUS) packetDecode(a_an8Packet []byte) ([]byte, error) {
 
 	if len(a_an8Packet) == 0 {
@@ -192,6 +176,23 @@ func (ego *STDBUS) packetDecode(a_an8Packet []byte) ([]byte, error) {
 				temp = append(temp, v)
 			}
 		}
+	}
+	return temp, nil
+}
+
+func (ego *STDBUS) calcCRC(a_an8Packet []byte) ([]byte, error) {
+	checksum := crc16.Checksum(a_an8Packet, ego.pstCRCTable)
+
+	temp := a_an8Packet[0 : len(a_an8Packet)-2]
+
+	if checksum != 0 {
+
+		fmt.Println(a_an8Packet)
+		fmt.Printf("calcCRC: %x\n", checksum)
+		fmt.Printf("calcCRC: %x\n", a_an8Packet[len(a_an8Packet)-1])
+		fmt.Printf("calcCRC: %x\n", a_an8Packet[len(a_an8Packet)-2])
+
+		return temp, errors.New("calcCRC: Received data CRC wrong")
 	}
 	return temp, nil
 }
