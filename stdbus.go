@@ -3,7 +3,6 @@ package stdbus
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/sigurn/crc16"
@@ -32,7 +31,7 @@ func GetSTDBUS(port string, baud int, timeout time.Duration) (*STDBUS, error) {
 }
 
 func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
-
+	//fmt.Println("Packetsend start1")
 	retCRC, err := ego.makeCRC(a_an8Packet)
 	if err != nil {
 		return nil, err
@@ -43,18 +42,19 @@ func (ego *STDBUS) Packetsend(a_an8Packet []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	sendRes, err := ego.pstSerialPort.Write(retEncode)
+	//sendRes, err := ego.pstSerialPort.Write(retEncode)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	//_ = sendRes
+	//fmt.Println("Packetsend start2")
+	rcvData, err := ego.packetReceive(retEncode)
 	if err != nil {
 		return nil, err
 	}
 
-	_ = sendRes
-
-	rcvData, err := ego.packetReceive()
-	if err != nil {
-		return nil, err
-	}
-
+	//fmt.Println("Packetsend start3")
 	resDecode, err := ego.packetDecode(rcvData)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (ego *STDBUS) packetEncode(a_an8Packet []byte) ([]byte, error) {
 	return temp, nil
 }
 
-func (ego *STDBUS) packetReceive() ([]byte, error) {
+func (ego *STDBUS) packetReceive(sendData []byte) ([]byte, error) {
 
 	//n32Timeout := 0
 	const MODE_WAIT = 1
@@ -116,31 +116,45 @@ func (ego *STDBUS) packetReceive() ([]byte, error) {
 	rcvTemp := make([]byte, 512)
 	rcvData := make([]byte, 0, 512)
 
+	sendRes, err := ego.pstSerialPort.Write(sendData)
+	if err != nil {
+		return nil, err
+	}
+	_ = sendRes
+
 	for {
 		//ego.pstSerialPort.
-		//fmt.Printf(" pstSerialPortn")
+		//fmt.Println("pstSerialPort")
 		n, err := ego.pstSerialPort.Read(rcvTemp)
 		if err != nil {
-			log.Fatal(err)
+
+			//fmt.Println(err)
 		}
-		//fmt.Printf(" %d\n", n)
+		//fmt.Println("pstSerialPort: ", n)
+		//fmt.Println("pstSerialPortrcv: ", rcvTemp)
 
 		if n > 0 {
 			timeout = 0
 
 			for i := 0; i < n; i++ {
 				if mode == MODE_RCV {
+					//fmt.Println("MODE_RCV: ", rcvTemp[i], i)
+
 					if rcvTemp[i] == ETX {
 						mode = MODE_WAIT
+						//fmt.Println("MODE_WAIT return: ", rcvData)
+
 						return rcvData, nil
 					} else {
 						rcvData = append(rcvData, rcvTemp[i])
 					}
 				} else if mode == MODE_WAIT {
 					if rcvTemp[i] == STX {
+						//	fmt.Println("STX: ", rcvTemp[i])
+
 						mode = MODE_RCV
-						rcvTemp = make([]byte, 512)
-						rcvData = make([]byte, 0, 512)
+						//rcvTemp = make([]byte, 512)
+						//rcvData = make([]byte, 0, 512)
 					}
 				}
 			}
@@ -148,6 +162,7 @@ func (ego *STDBUS) packetReceive() ([]byte, error) {
 		}
 		timeout++
 		if timeout >= 3 {
+			fmt.Println("timeout: ", mode)
 			return rcvData, errors.New("packetReceive : Receive Timeout")
 
 		}
@@ -196,3 +211,4 @@ func (ego *STDBUS) calcCRC(a_an8Packet []byte) ([]byte, error) {
 	}
 	return temp, nil
 }
+
