@@ -9,6 +9,7 @@ import (
 	"github.com/tarm/serial"
 )
 
+// test
 const STX uint8 = 0xc0
 const ETX uint8 = 0xc1
 const DIST uint8 = 0x7d
@@ -211,4 +212,3 @@ func (ego *STDBUS) calcCRC(a_an8Packet []byte) ([]byte, error) {
 	}
 	return temp, nil
 }
-
